@@ -14,16 +14,16 @@ router.register(r'booking-rules', views.BookingRuleViewSet, basename='booking-ru
 router.register(r'post-session-services', views.PostSessionServiceViewSet, basename='post-session-service')
 
 urlpatterns = [
-    path('api/', include(router.urls)),
+    path('/', include(router.urls)),
     
     # Quick booking
-    path('api/quick-booking/', views.QuickBookingView.as_view(), name='quick-booking'),
+    path('quick-booking/', views.QuickBookingView.as_view(), name='quick-booking'),
     
     # Utility endpoints
-    path('api/check-availability/', views.availability_check, name='check-availability'),
-    path('api/daily-schedule/', views.daily_schedule, name='daily-schedule'),
-    path('api/studio-status/', views.studio_status, name='studio-status'),
-    path('api/email-preview/<int:booking_id>/', views.email_preview, name='email-preview'),
+    path('check-availability/', views.availability_check, name='check-availability'),
+    path('daily-schedule/', views.daily_schedule, name='daily-schedule'),
+    path('studio-status/', views.studio_status, name='studio-status'),
+    path('email-preview/<int:booking_id>/', views.email_preview, name='email-preview'),
     
     # Authentication (if needed later)
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
