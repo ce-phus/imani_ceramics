@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
-import { Home } from './pages'
+import { Home, BookingPolicyUI, BookingUI, PotteryProcess, Quiz } from './pages'
 import { SplashScreen, Navbar, Footer } from './components'
 import { AnimatePresence } from 'framer-motion'
 
@@ -24,6 +24,10 @@ function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/booking" element={<BookingUI />} />
+          <Route path="/booking-policy" element={<BookingPolicyUI />} />
+          <Route path="/pottery-process" element={<PotteryProcess />} />
+          <Route path="/qa" element={<Quiz />} />
         </Routes>
         <Footer />
         </>

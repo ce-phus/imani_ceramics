@@ -47,12 +47,6 @@ const Navbar = () => {
               Booking Policy
             </a>
             <a
-              href="/packages"
-              className="text-gray-700 hover:text-gray-900 font-medium transition duration-150 ease-in-out"
-            >
-              Packages
-            </a>
-            <a
               href="/qa"
               className="text-gray-700 hover:text-gray-900 font-medium transition duration-150 ease-in-out"
             >
@@ -101,13 +95,6 @@ const Navbar = () => {
               onClick={() => setIsOpen(false)}
             >
               Booking Policy
-            </a>
-            <a
-              href="/packages"
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 transition"
-              onClick={() => setIsOpen(false)}
-            >
-              Packages
             </a>
             <a
               href="/qa"
