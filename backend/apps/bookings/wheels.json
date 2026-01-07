@@ -1,0 +1,50 @@
+[
+  {
+    "wheel_number": 1,
+    "name": "Wheel 1",
+    "status": "available",
+    "is_active": true
+  },
+  {
+    "wheel_number": 2,
+    "name": "Wheel 2",
+    "status": "available",
+    "is_active": true
+  },
+  {
+    "wheel_number": 3,
+    "name": "Wheel 3",
+    "status": "available",
+    "is_active": true
+  },
+  {
+    "wheel_number": 4,
+    "name": "Wheel 4",
+    "status": "available",
+    "is_active": true
+  },
+  {
+    "wheel_number": 5,
+    "name": "Wheel 5",
+    "status": "available",
+    "is_active": true
+  },
+  {
+    "wheel_number": 6,
+    "name": "Wheel 6",
+    "status": "available",
+    "is_active": true
+  },
+  {
+    "wheel_number": 7,
+    "name": "Wheel 7",
+    "status": "available",
+    "is_active": true
+  },
+  {
+    "wheel_number": 8,
+    "name": "Wheel 8",
+    "status": "available",
+    "is_active": true
+  }
+]

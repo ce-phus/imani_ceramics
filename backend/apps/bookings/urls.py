@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from bookings import views
+from . import views
 
 router = DefaultRouter()
 router.register(r'studio-config', views.StudioConfigViewSet, basename='studio-config')
@@ -14,7 +14,7 @@ router.register(r'booking-rules', views.BookingRuleViewSet, basename='booking-ru
 router.register(r'post-session-services', views.PostSessionServiceViewSet, basename='post-session-service')
 
 urlpatterns = [
-    path('/', include(router.urls)),
+    path('', include(router.urls)),
     
     # Quick booking
     path('quick-booking/', views.QuickBookingView.as_view(), name='quick-booking'),

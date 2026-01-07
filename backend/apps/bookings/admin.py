@@ -51,6 +51,8 @@ class PackageAdmin(admin.ModelAdmin):
         "is_active",
     )
 
+    list_display_links = ("code", "name", "package_type")
+
     list_filter = (
         "package_type",
         "requires_wheel",

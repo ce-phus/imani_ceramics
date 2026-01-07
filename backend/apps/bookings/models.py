@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _  # FIXED: translation not
 from django.utils import timezone
 from datetime import datetime, time, timedelta
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 
 
 class StudioConfig(models.Model):
@@ -151,6 +152,13 @@ class Package(models.Model):
         ordering = ['code']
         verbose_name = _("Package")
         verbose_name_plural = _("Packages")
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            prefix = self.package_type[:3].upper()
+            last = Package.objects.filter(code__startswith=prefix).count() + 1
+            self.code = f"{prefix}-{last:03d}"
+        super().save(*args, **kwargs)
 
     def __str__(self):
         duration_info = ""
