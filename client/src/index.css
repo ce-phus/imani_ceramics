@@ -1,1 +1,57 @@
 @import "tailwindcss";
+
+/* Custom Ceramic Theme - Warm Terracotta/Clay Colors */
+@layer base {
+  :root {
+    --color-ceramic-50: 250 247 245;   /* #faf7f5 */
+    --color-ceramic-100: 244 237 232;  /* #f4ede8 */
+    --color-ceramic-200: 232 219 210;  /* #e8dbd2 */
+    --color-ceramic-300: 220 201 188;  /* #dcc9bc */
+    --color-ceramic-400: 201 168 147;  /* #c9a893 */
+    --color-ceramic-500: 181 136 106;  /* #b5886a */
+    --color-ceramic-600: 160 112 80;   /* #a07050 */
+    --color-ceramic-700: 128 85 64;    /* #805540 */
+    --color-ceramic-800: 96 63 48;     /* #603f30 */
+    --color-ceramic-900: 64 42 32;     /* #402a20 */
+  }
+}
+
+@layer utilities {
+  .bg-ceramic-50 { background-color: rgb(var(--color-ceramic-50)); }
+  .bg-ceramic-100 { background-color: rgb(var(--color-ceramic-100)); }
+  .bg-ceramic-200 { background-color: rgb(var(--color-ceramic-200)); }
+  .bg-ceramic-300 { background-color: rgb(var(--color-ceramic-300)); }
+  .bg-ceramic-400 { background-color: rgb(var(--color-ceramic-400)); }
+  .bg-ceramic-500 { background-color: rgb(var(--color-ceramic-500)); }
+  .bg-ceramic-600 { background-color: rgb(var(--color-ceramic-600)); }
+  .bg-ceramic-700 { background-color: rgb(var(--color-ceramic-700)); }
+  .bg-ceramic-800 { background-color: rgb(var(--color-ceramic-800)); }
+  .bg-ceramic-900 { background-color: rgb(var(--color-ceramic-900)); }
+
+  .text-ceramic-50 { color: rgb(var(--color-ceramic-50)); }
+  .text-ceramic-100 { color: rgb(var(--color-ceramic-100)); }
+  .text-ceramic-200 { color: rgb(var(--color-ceramic-200)); }
+  .text-ceramic-300 { color: rgb(var(--color-ceramic-300)); }
+  .text-ceramic-400 { color: rgb(var(--color-ceramic-400)); }
+  .text-ceramic-500 { color: rgb(var(--color-ceramic-500)); }
+  .text-ceramic-600 { color: rgb(var(--color-ceramic-600)); }
+  .text-ceramic-700 { color: rgb(var(--color-ceramic-700)); }
+  .text-ceramic-800 { color: rgb(var(--color-ceramic-800)); }
+  .text-ceramic-900 { color: rgb(var(--color-ceramic-900)); }
+
+  .border-ceramic-50 { border-color: rgb(var(--color-ceramic-50)); }
+  .border-ceramic-100 { border-color: rgb(var(--color-ceramic-100)); }
+  .border-ceramic-200 { border-color: rgb(var(--color-ceramic-200)); }
+  .border-ceramic-300 { border-color: rgb(var(--color-ceramic-300)); }
+  .border-ceramic-400 { border-color: rgb(var(--color-ceramic-400)); }
+  .border-ceramic-500 { border-color: rgb(var(--color-ceramic-500)); }
+  .border-ceramic-600 { border-color: rgb(var(--color-ceramic-600)); }
+  .border-ceramic-700 { border-color: rgb(var(--color-ceramic-700)); }
+  .border-ceramic-800 { border-color: rgb(var(--color-ceramic-800)); }
+  .border-ceramic-900 { border-color: rgb(var(--color-ceramic-900)); }
+
+  .ring-ceramic-500 { --tw-ring-color: rgb(var(--color-ceramic-500)); }
+}
+
+/* Optional: Hover variants (Tailwind doesn't generate them automatically in CSS) */
+.hover\:bg-ceramic-700:hover { background-color: rgb(var(--color-ceramic-700)); }

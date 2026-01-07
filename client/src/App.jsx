@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { Home, BookingPolicyUI, BookingUI, PotteryProcess, Quiz } from './pages'
 import { SplashScreen, Navbar, Footer } from './components'
 import { AnimatePresence } from 'framer-motion'
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -22,6 +23,7 @@ function App() {
       {!showSplash && (
         <>
         <Navbar />
+          <Toaster position="top-right" reverseOrder={false} />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/booking" element={<BookingUI />} />
