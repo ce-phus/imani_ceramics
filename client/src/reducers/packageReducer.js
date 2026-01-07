@@ -1,4 +1,4 @@
-import { ACTION_TYPES } from '../actions';
+import { ACTION_TYPES } from '../constants/index';
 
 const initialState = {
     packages: [],

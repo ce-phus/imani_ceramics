@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import { Home } from './pages'
-import { SplashScreen } from './components'
+import { SplashScreen, Navbar, Footer } from './components'
 import { AnimatePresence } from 'framer-motion'
 
 function App() {
@@ -20,9 +20,14 @@ function App() {
   <HelmetProvider>
     <Router>
       {!showSplash && (
+        <>
+        <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
         </Routes>
+        <Footer />
+        </>
+        
       )}
 
       <AnimatePresence mode="wait">
