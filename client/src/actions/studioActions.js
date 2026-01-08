@@ -8,6 +8,7 @@ export const fetchStudioConfig = () => async (dispatch) => {
         dispatch({ type: 'FETCH_STUDIO_CONFIG_REQUEST' });
 
         const { data } = await axios.get(`${API_URL}/api/booking/studio-config/`);
+        console.log('Fetched studio config:', data);
         dispatch({ type: 'FETCH_STUDIO_CONFIG_SUCCESS', payload: data });
     } catch (error) {
         dispatch({ 

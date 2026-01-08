@@ -778,3 +778,20 @@ def email_preview(request, booking_id):
     }
     
     return Response(templates)
+
+@api_view(['GET', 'PATCH'])
+@permission_classes([AllowAny])
+def studio_config_endpoint(request):
+    """Studio configuration singleton endpoint"""
+    config = StudioConfig.get_config()
+    
+    if request.method == 'GET':
+        serializer = StudioConfigSerializer(config)
+        return Response(serializer.data)
+    
+    elif request.method == 'PATCH':
+        serializer = StudioConfigSerializer(config, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

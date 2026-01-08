@@ -1,36 +1,56 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { 
   FaWheelchair, 
   FaHands, 
   FaPalette, 
   FaClock,
   FaCalendarAlt,
-  FaPhoneAlt,
-  FaMapMarkerAlt,
-  FaInstagram,
-  FaFacebook,
-  FaEnvelope
+  FaTools,
+  FaUserFriends,
+  FaRegClock,
+  FaExclamationTriangle
 } from 'react-icons/fa';
+import { TbRotateDot } from "react-icons/tb";
+import { fetchStudioConfig, fetchStudioStatus } from '../actions/studioActions';
+import Studio from '../components/Studio';
 
-const HomePage = () => {
-  const [studioStatus, setStudioStatus] = useState({
-    isOpen: true,
-    availableWheels: 4,
-    totalWheels: 8,
-    todayBookings: 3
-  });
+const Home = () => {
+  const dispatch = useDispatch();
+  const { studioConfig, studioStatus, loading, error } = useSelector((state) => state.studio);
+  console.log('Studio Config:', studioConfig);
+  console.log('Studio Status:', studioStatus);
+
+  const studioInfo = studioStatus?.studio || {};
+  const todayInfo = studioStatus?.today || {};
+
+  const isStudioOpen = studioInfo.is_open;  // Not studioStatus.is_open
+  const availableWheels = todayInfo.available_wheels;  // Not studioStatus.available_wheels
+  const bookingsCount = todayInfo.bookings_count;
+  const totalWheelsToday = todayInfo.total_wheels;
+
+  useEffect(() => {
+    // Fetch studio configuration and status on component mount
+    dispatch(fetchStudioConfig());
+    dispatch(fetchStudioStatus());
+  }, [dispatch]);
 
   const packages = [
     {
       id: 1,
       name: "Wheel Throwing",
-      icon: <FaWheelchair className="text-3xl" />,
-      duration: "1-2 hours",
-      price: "From KES 2,000",
+      icon: <TbRotateDot className="text-3xl" />,
+      duration: `${studioConfig?.wheel_session_duration || 60} minutes per session`,
+      price: `From KES ${studioConfig?.booking_fee_per_person || '2,000'}`,
       description: "Create on the pottery wheel with expert guidance",
-      color: "from-blue-500 to-teal-400"
+      color: "from-blue-500 to-teal-400",
+      features: [
+        `Session duration: ${studioConfig?.wheel_session_duration || 60} minutes`,
+        `${studioConfig?.total_wheels || 8} wheels available`,
+        `Buffer time: ${studioConfig?.buffer_minutes_between_sessions || 15} minutes`
+      ]
     },
     {
       id: 2,
@@ -70,8 +90,94 @@ const HomePage = () => {
     }
   ];
 
+  // Format time from HH:MM:SS to HH:MM AM/PM
+  const formatTime = (timeString) => {
+    if (!timeString) return '--:--';
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const formattedHour = hour % 12 || 12;
+    return `${formattedHour}:${minutes} ${ampm}`;
+  };
+
+  // Get available wheels - FIXED
+const getAvailableWheels = () => {
+  if (!studioConfig || !studioStatus?.today) return 'Loading...';
+  return `${studioStatus.today.available_wheels} of ${studioConfig.total_wheels}`;
+};
+
+// Calculate available slots - FIXED
+const calculateAvailableSlots = () => {
+  if (!studioConfig || !studioStatus?.today) return 'Loading...';
+  
+  const maxSessions = studioConfig.max_daily_sessions;
+  const bookedSessions = studioStatus.today.bookings_count || 0;
+  const availableSessions = maxSessions - bookedSessions;
+  
+  return `${availableSessions} of ${maxSessions}`;
+};
+
+  // Maintenance mode banner
+  const MaintenanceBanner = () => {
+    if (!studioConfig?.is_maintenance_mode) return null;
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-amber-500 text-white py-3 px-4 text-center"
+      >
+        <div className="container mx-auto max-w-6xl flex items-center justify-center gap-3">
+          <FaExclamationTriangle className="text-xl" />
+          <div>
+            <p className="font-bold">Studio Under Maintenance</p>
+            {studioConfig.maintenance_message && (
+              <p className="text-sm opacity-90">{studioConfig.maintenance_message}</p>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  // Loading component
+  const LoadingSpinner = () => (
+    <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-ceramic-200 border-t-ceramic-600 rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-ceramic-700">Loading studio information...</p>
+      </div>
+    </div>
+  );
+
+  // Error component
+  const ErrorDisplay = () => (
+    <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="text-center max-w-md">
+        <div className="text-red-500 text-4xl mb-4">⚠️</div>
+        <h3 className="text-xl font-bold text-ceramic-800 mb-2">Unable to Load Studio Data</h3>
+        <p className="text-ceramic-600 mb-4">{error?.message || 'Please check your connection'}</p>
+        <button
+          onClick={() => {
+            dispatch(fetchStudioConfig());
+            dispatch(fetchStudioStatus());
+          }}
+          className="px-6 py-2 bg-ceramic-600 text-white rounded-full hover:bg-ceramic-700 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorDisplay />;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-ceramic-50 to-white">
+      {/* Maintenance Banner */}
+      <MaintenanceBanner />
+
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
         {/* Background Pattern */}
@@ -107,7 +213,7 @@ const HomePage = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link
                 to="/packages"
-                className="px-8 py-4 bg-gradient-to-r from-ceramic-600 to-ceramic-700 text-white font-semibold rounded-full hover:shadow-xl hover:scale-105 transition-all duration-300"
+                className="px-8 py-4 bg-gradient-to-r from-[rgb(var(--color-ceramic-600))] to-[rgb(var(--color-ceramic-700))] text-white font-semibold rounded-full hover:shadow-xl hover:scale-105 transition-all duration-300"
               >
                 View Packages & Book
               </Link>
@@ -124,22 +230,110 @@ const HomePage = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="inline-flex items-center gap-4 bg-white/80 backdrop-blur-sm px-6 py-4 rounded-2xl shadow-lg"
+              className="inline-flex flex-col md:flex-row items-center gap-6 bg-white/80 backdrop-blur-sm px-8 py-6 rounded-2xl shadow-lg"
             >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-full ${studioStatus.isOpen ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                  <div className={`w-3 h-3 rounded-full ${studioStatus.isOpen ? 'bg-green-500' : 'bg-red-500'}`} />
+              {/* Main Status */}
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-full ${studioStatus?.studio?.is_open ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                  <div className={`w-4 h-4 rounded-full ${studioStatus?.studio?.is_open ? 'bg-green-500' : 'bg-red-500'}`} />
                 </div>
-                <div>
-                  <p className="font-semibold text-ceramic-800">
-                    {studioStatus.isOpen ? 'Studio Open' : 'Studio Closed'}
+                <div className="text-left">
+                  <p className="font-bold text-lg text-ceramic-800">
+                    {studioConfig?.is_maintenance_mode ? 'Maintenance Mode' : 
+                    studioStatus?.studio?.is_open === true ? 'Studio Open' : 'Studio Closed'}
                   </p>
+                  <p className="text-ceramic-600">
+                    {getAvailableWheels()} wheels available
+                  </p>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="hidden md:block w-px h-10 bg-ceramic-200" />
+
+              {/* Operating Hours */}
+              <div className="flex items-center gap-3">
+                <FaRegClock className="text-ceramic-500" />
+                <div>
+                  <p className="font-semibold text-ceramic-800">Operating Hours</p>
                   <p className="text-sm text-ceramic-600">
-                    {studioStatus.availableWheels} of {studioStatus.totalWheels} wheels available
+                    {formatTime(studioConfig?.operating_time)} - {formatTime(studioConfig?.closing_time)}
+                  </p>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="hidden md:block w-px h-10 bg-ceramic-200" />
+
+              {/* Daily Slots */}
+              <div className="flex items-center gap-3">
+                <FaCalendarAlt className="text-ceramic-500" />
+                <div>
+                  <p className="font-semibold text-ceramic-800">Daily Slots</p>
+                  <p className="text-sm text-ceramic-600">{calculateAvailableSlots()} slots available</p>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="hidden md:block w-px h-10 bg-ceramic-200" />
+
+              {/* Booking Fee */}
+              <div className="flex items-center gap-3">
+                <FaUserFriends className="text-ceramic-500" />
+                <div>
+                  <p className="font-semibold text-ceramic-800">Booking Fee</p>
+                  <p className="text-sm text-ceramic-600">
+                    KES {studioConfig?.booking_fee_per_person || '1,000'}/person
                   </p>
                 </div>
               </div>
             </motion.div>
+
+            {/* Studio Configuration Details (Collapsible) */}
+            {studioConfig && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                transition={{ delay: 0.5 }}
+                className="mt-8 text-left max-w-2xl mx-auto"
+              >
+                <details className="bg-white/50 backdrop-blur-sm rounded-xl p-4 shadow">
+                  <summary className="cursor-pointer font-semibold text-ceramic-700 flex items-center gap-2">
+                    <FaTools /> Studio Configuration Details
+                  </summary>
+                  <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-ceramic-600">Session Duration:</span>
+                        <span className="font-semibold">{studioConfig.wheel_session_duration} min</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ceramic-600">Buffer Time:</span>
+                        <span className="font-semibold">{studioConfig.buffer_minutes_between_sessions} min</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ceramic-600">Max Daily Sessions:</span>
+                        <span className="font-semibold">{studioConfig.max_daily_sessions}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-ceramic-600">Opening Time:</span>
+                        <span className="font-semibold">{formatTime(studioConfig.operating_time)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ceramic-600">Closing Time:</span>
+                        <span className="font-semibold">{formatTime(studioConfig.closing_time)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-ceramic-600">Total Wheels:</span>
+                        <span className="font-semibold">{studioConfig.total_wheels}</span>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </section>
@@ -184,6 +378,19 @@ const HomePage = () => {
                     </div>
                   </div>
                   <p className="text-ceramic-600 mb-6">{pkg.description}</p>
+                  
+                  {/* Package-specific features */}
+                  {pkg.features && (
+                    <div className="mb-6 space-y-2">
+                      {pkg.features.map((feature, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-sm text-ceramic-600">
+                          <div className="w-1 h-1 rounded-full bg-ceramic-400" />
+                          {feature}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
                   <div className="flex justify-between items-center">
                     <span className="text-2xl font-bold text-ceramic-700">{pkg.price}</span>
                     <Link
@@ -234,10 +441,35 @@ const HomePage = () => {
 
           <div className="grid md:grid-cols-4 gap-8">
             {[
-              { step: 1, title: "Choose Package", desc: "Select your preferred ceramic experience", icon: "📋" },
-              { step: 2, title: "Pick Date & Time", desc: "Check availability and book your slot", icon: "📅" },
-              { step: 3, title: "Pay Booking Fee", desc: "Secure your spot with KES 1,000 per person", icon: "💳" },
-              { step: 4, title: "Create & Enjoy", desc: "Arrive and craft your masterpiece", icon: "🎨" }
+              { 
+                step: 1, 
+                title: "Choose Package", 
+                desc: "Select your preferred ceramic experience", 
+                icon: "📋",
+                detail: studioConfig?.booking_fee_per_person ? 
+                  `Booking fee: KES ${studioConfig.booking_fee_per_person}/person` : null
+              },
+              { 
+                step: 2, 
+                title: "Pick Date & Time", 
+                desc: "Check availability and book your slot", 
+                icon: "📅",
+                detail: `Operating hours: ${formatTime(studioConfig?.operating_time)} - ${formatTime(studioConfig?.closing_time)}`
+              },
+              { 
+                step: 3, 
+                title: "Pay Booking Fee", 
+                desc: "Secure your spot", 
+                icon: "💳",
+                detail: `${studioConfig?.max_daily_sessions || 20} sessions available daily`
+              },
+              { 
+                step: 4, 
+                title: "Create & Enjoy", 
+                desc: "Arrive and craft your masterpiece", 
+                icon: "🎨",
+                detail: `Session: ${studioConfig?.wheel_session_duration || 60} minutes`
+              }
             ].map((item, index) => (
               <motion.div
                 key={item.step}
@@ -245,10 +477,10 @@ const HomePage = () => {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="text-center"
+                className="text-center group"
               >
                 <div className="relative inline-block mb-4">
-                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ceramic-100 to-ceramic-200 flex items-center justify-center text-3xl">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-ceramic-100 to-ceramic-200 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform duration-300">
                     {item.icon}
                   </div>
                   <div className="absolute -top-2 -right-2 w-10 h-10 bg-ceramic-600 text-white rounded-full flex items-center justify-center font-bold">
@@ -256,14 +488,22 @@ const HomePage = () => {
                   </div>
                 </div>
                 <h3 className="text-xl font-bold text-ceramic-800 mb-2">{item.title}</h3>
-                <p className="text-ceramic-600">{item.desc}</p>
+                <p className="text-ceramic-600 mb-2">{item.desc}</p>
+                {item.detail && (
+                  <p className="text-sm text-ceramic-500 bg-ceramic-50 px-3 py-1 rounded-full inline-block">
+                    {item.detail}
+                  </p>
+                )}
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Studio Component */}
+      <Studio />
+
+      {/* Testimonials Section */}
       <section className="py-16 px-4 bg-gradient-to-b from-white to-ceramic-50">
         <div className="container mx-auto max-w-6xl">
           <motion.div
@@ -301,65 +541,9 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Contact & Info Section */}
-      <section className="py-16 px-4 bg-ceramic-800 text-white">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-3 gap-12">
-            <div>
-              <h3 className="text-2xl font-display font-bold mb-6">Imani Ceramic Studio</h3>
-              <p className="text-ceramic-200 mb-6">
-                Where creativity meets clay. Book your hands-on pottery experience today.
-              </p>
-              <div className="flex gap-4">
-                <a href="#" className="text-ceramic-200 hover:text-white transition-colors">
-                  <FaInstagram size={24} />
-                </a>
-                <a href="#" className="text-ceramic-200 hover:text-white transition-colors">
-                  <FaFacebook size={24} />
-                </a>
-                <a href="#" className="text-ceramic-200 hover:text-white transition-colors">
-                  <FaEnvelope size={24} />
-                </a>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-xl font-bold mb-6">Quick Links</h4>
-              <ul className="space-y-3">
-                <li><Link to="/packages" className="text-ceramic-200 hover:text-white transition-colors">Packages</Link></li>
-                <li><Link to="/booking" className="text-ceramic-200 hover:text-white transition-colors">Book Now</Link></li>
-                <li><Link to="/booking-history" className="text-ceramic-200 hover:text-white transition-colors">Booking History</Link></li>
-                <li><Link to="/pricing" className="text-ceramic-200 hover:text-white transition-colors">Pricing</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-xl font-bold mb-6">Contact Info</h4>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-ceramic-200">
-                  <FaPhoneAlt />
-                  <span>+254 762 196 696 (WhatsApp)</span>
-                </div>
-                <div className="flex items-center gap-3 text-ceramic-200">
-                  <FaMapMarkerAlt />
-                  <span>Nairobi, Kenya</span>
-                </div>
-                <div className="flex items-center gap-3 text-ceramic-200">
-                  <FaClock />
-                  <span>Mon-Sun: 8AM - 6PM</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-ceramic-700 mt-12 pt-8 text-center text-ceramic-400">
-            <p>© {new Date().getFullYear()} Imani Ceramic Studio. All rights reserved.</p>
-            <p className="text-sm mt-2">Stay Calm and Potter With Imani Ceramic</p>
-          </div>
-        </div>
-      </section>
+      
     </div>
   );
 };
 
-export default HomePage;
+export default Home;

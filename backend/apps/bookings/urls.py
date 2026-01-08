@@ -23,6 +23,7 @@ urlpatterns = [
     path('check-availability/', views.availability_check, name='check-availability'),
     path('daily-schedule/', views.daily_schedule, name='daily-schedule'),
     path('studio-status/', views.studio_status, name='studio-status'),
+    path('studio-config/', views.studio_config_endpoint, name='studio-config'),
     path('email-preview/<int:booking_id>/', views.email_preview, name='email-preview'),
     
     # Authentication (if needed later)
