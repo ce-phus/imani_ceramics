@@ -534,55 +534,39 @@ def get_bookings_for_customer(phone, email=None):
     
     return Booking.objects.filter(query).select_related('package').order_by('-booked_date', '-session_start')
 
-
-def can_reschedule_booking(booking, new_date, new_time):
-    """
-    Check if a booking can be rescheduled
-    
-    Args:
-        booking: Booking instance
-        new_date: New booking date
-        new_time: New start time
-    
-    Returns:
-        tuple: (can_reschedule, reason if not)
-    """
-    # Check if booking is in a state that allows rescheduling
-    if booking.payment_status not in ['confirmed', 'pending']:
-        return False, f'Booking is {booking.payment_status}, cannot reschedule'
-    
-    # Check reschedule policy (24 hours in advance)
-    booking_datetime = datetime.combine(booking.booked_date, booking.session_start)
-    if timezone.now() > booking_datetime - timedelta(hours=24):
-        return False, 'Rescheduling must be done at least 24 hours in advance'
-    
-    # Check availability for new time
-    availability = check_booking_availability(
-        new_date, new_time, booking.package, booking.number_of_people, booking
-    )
-    
-    if not availability['is_available']:
-        return False, availability.get('reason', 'Time slot not available')
-    
-    return True, 'Can reschedule'
-
-
 def can_cancel_booking(booking):
-    """
-    Check if a booking can be cancelled
-    
-    Args:
-        booking: Booking instance
-    
-    Returns:
-        tuple: (can_cancel, reason if not)
-    """
+    """Check if a booking can be cancelled"""
     if booking.payment_status in ['cancelled', 'completed', 'no_show']:
         return False, f'Booking is already {booking.payment_status}'
-    
-    # Check cancellation policy (24 hours in advance)
-    booking_datetime = datetime.combine(booking.booked_date, booking.session_start)
-    if timezone.now() > booking_datetime - timedelta(hours=24):
+
+    # FIX: Create timezone-aware datetime
+    naive_dt = datetime.combine(booking.booked_date, booking.session_start)
+    booking_dt = timezone.make_aware(naive_dt)  # Uses current/active timezone
+
+    if timezone.now() > booking_dt - timedelta(hours=24):
         return False, 'Cancellation must be done at least 24 hours in advance'
-    
-    return True, 'Can cancel' 
+
+    return True, 'Can cancel'
+
+
+def can_reschedule_booking(booking, new_date=None, new_time=None):
+    """Check if a booking can be rescheduled"""
+    if booking.payment_status not in ['confirmed', 'pending']:
+        return False, f'Booking is {booking.payment_status}, cannot reschedule'
+
+    # FIX: Use booking's own date/time for 24-hour check
+    naive_dt = datetime.combine(booking.booked_date, booking.session_start)
+    booking_dt = timezone.make_aware(naive_dt)
+
+    if timezone.now() > booking_dt - timedelta(hours=24):
+        return False, 'Rescheduling must be done at least 24 hours in advance'
+
+    # If new slot provided, check availability
+    if new_date and new_time:
+        availability = check_booking_availability(
+            new_date, new_time, booking.package, booking.number_of_people, exclude_booking=booking
+        )
+        if not availability['is_available']:
+            return False, availability.get('reason', 'New time slot not available')
+
+    return True, 'Can reschedule' 

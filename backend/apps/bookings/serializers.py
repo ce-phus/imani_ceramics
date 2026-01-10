@@ -225,7 +225,7 @@ class BookingSerializer(serializers.ModelSerializer):
         if not obj.pk:
             return {'can_reschedule': False, 'reason': 'Booking not saved'}
         
-        can_reschedule, reason = can_reschedule_booking(obj, obj.booked_date, obj.session_start)
+        can_reschedule, reason = can_reschedule_booking(obj)
         return {'can_reschedule': can_reschedule, 'reason': reason}
     
     def get_can_cancel(self, obj):

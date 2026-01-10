@@ -433,6 +433,12 @@ class Booking(models.Model):
     def __str__(self):
         return f"Booking {self.booking_reference} for {self.customer_name} on {self.booked_date} - {self.package.name}"
 
+    def get_calculated_end_time(self):
+        """Get Calculated end time (used for validation)"""
+        if self.session_end:
+            return self.session_end
+        return self.package.calculate_end_time(self.session_start, self.booked_date)
+
     def clean(self):
         """Validate Booking"""
         super().clean()
@@ -473,7 +479,7 @@ class Booking(models.Model):
                 )
 
     def save(self, *args, **kwargs):
-        """Generate booking reference if new"""
+        """Generate reference + calculate amounts correctly as per 2025 policy"""
         if not self.booking_reference:
             date_str = self.booked_date.strftime('%Y%m%d') if self.booked_date else timezone.now().strftime('%Y%m%d')
             last_booking = Booking.objects.filter(
@@ -481,36 +487,80 @@ class Booking(models.Model):
             ).count()
             self.booking_reference = f'IM-{date_str}-{last_booking + 1:04d}'
 
-        # Calculate package amount
         if self.package:
+            # Package amount = price per person × number of people
             self.package_amount = self.package.price * self.number_of_people
 
-        # Calculate total amount (package + booking fee)
-        config = StudioConfig.get_config()
-        booking_fee = config.booking_fee_per_person * self.number_of_people
-        self.booking_fee_paid = booking_fee
-        self.total_amount = self.package_amount + booking_fee
+            # Get config
+            config = StudioConfig.get_config()
 
-        # Calculate session end time if not provided
+            # Booking fee (deposit) = 1000 KES × people
+            deposit_amount = config.booking_fee_per_person * self.number_of_people
+
+            # IMPORTANT: booking_fee_paid stores what was actually paid upfront (deposit)
+            self.booking_fee_paid = deposit_amount
+
+            # Total amount = full expected bill BEFORE deducting deposit
+            # (this is what the customer will see as "total bill")
+            self.total_amount = self.package_amount  # + future optional charges added later
+
+            # Remaining due on-site = total - deposit paid
+            # (You can add a property for this if needed)
+            self.remaining_due = self.total_amount - self.booking_fee_paid
+
+        # Calculate session end time if missing
         if self.session_start and not self.session_end:
             self.session_end = self.package.calculate_end_time(self.session_start, self.booked_date)
 
-        # Run validation
         self.full_clean()
-
         super().save(*args, **kwargs)
 
-    def get_calculated_end_time(self):
-        """Get Calculated end time (used for validation)"""
-        if self.session_end:
-            return self.session_end
-        return self.package.calculate_end_time(self.session_start, self.booked_date)
+    def calculate_end_time(self, start_time, date=None):
+        """
+        Calculate end time based on package type (2025 policy)
+        """
+        if not start_time:
+            return None
+
+        config = StudioConfig.get_config()
+        closing = config.closing_time
+
+        if self.has_fixed_duration and self.fixed_duration_hours:
+            # Fixed: P1 (1h), P2 (2h)
+            start_dt = datetime.combine(date or timezone.now().date(), start_time)
+            end_dt = start_dt + timedelta(hours=float(self.fixed_duration_hours))
+            return min(end_dt.time(), closing)  # can't go past closing
+
+        elif self.package_type in ['hand_building', 'painting', 'colored_clay']:
+            # P3, P5, P7 → truly unlimited → end at closing (but display as "Unlimited")
+            return closing
+
+        elif self.package_type == 'combo':
+            # P4: max 2h wheel + unlimited handbuilding → end at closing (flexible)
+            return closing
+
+        elif self.package_type == 'hobbyist':
+            # P6: per hour, usually 1h sessions → assume 1h default unless specified
+            start_dt = datetime.combine(date or timezone.now().date(), start_time)
+            end_dt = start_dt + timedelta(hours=1)
+            return min(end_dt.time(), closing)
+
+        else:
+            # Fallback: use max_duration_hours if set, else closing
+            if self.max_duration_hours:
+                start_dt = datetime.combine(date or timezone.now().date(), start_time)
+                end_dt = start_dt + timedelta(hours=float(self.max_duration_hours))
+                return min(end_dt.time(), closing)
+            return closing
 
     @property
     def duration_display(self):
         """Display duration for this booking"""
-        if self.package.has_fixed_duration:
-            return self.package.get_session_duration_display()
+        if self.package.package_type in ['hand_building', 'painting', 'colored_clay', 'combo']:
+            return "Unlimited (until studio closes)"
+
+        if self.package.package_type == 'hobbyist':
+            return "1 hour per session (prepaid blocks)"
         
         if self.session_start and self.session_end:
             start_dt = datetime.combine(self.booked_date, self.session_start)
@@ -544,6 +594,22 @@ class Booking(models.Model):
         # Session is active if it's today and within reasonable hours
         return (session_date.date() == now.date() and 
                 session_date <= now <= session_date + timedelta(hours=4))
+
+    @property
+    def deposit_amount(self):
+        """Alias for clarity"""
+        return self.booking_fee_paid
+
+    @property
+    def remaining_due_on_site(self):
+        """What customer still owes after deducting deposit"""
+        # For now just package, later add post-session services total
+        return self.package_amount - self.deposit_amount
+
+    @property
+    def expected_total_bill(self):
+        """Full bill before any deductions (package only for now)"""
+        return self.package_amount
     
     def check_in(self):
         """Mark customer as checked in"""

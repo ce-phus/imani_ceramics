@@ -1,0 +1,28 @@
+Booking Confirmation - {{ booking.booking_reference }}
+
+Dear {{ booking.customer_name }},
+
+Your booking has been confirmed! Here are your booking details:
+
+Booking Reference: {{ booking.booking_reference }}
+Package: {{ booking.package.name }}
+Date: {{ booking.booked_date|date:"F d, Y" }}
+Time: {{ booking.session_start|time:"g:i A" }}
+Duration: {{ booking.duration_display }}
+Number of People: {{ booking.number_of_people }}
+Total Amount: KES {{ booking.total_amount }}
+Booking Fee Paid: KES {{ booking.booking_fee_paid }}
+
+Important Notes:
+- Please arrive 15 minutes before your session
+- Bring your booking reference with you
+- Cancellation must be done 24 hours in advance
+- Booking fee is non-refundable if cancelled within 24 hours
+
+We look forward to seeing you at Imani Ceramic!
+
+Imani Ceramic Studio
+{{ studio_config.total_wheels }} Wheels | Open {{ studio_config.operating_time|time:"g:i A" }} - {{ studio_config.closing_time|time:"g:i A" }}
+Contact: +254762196696 | Email: info@imaniceramic.com
+
+This email was sent on {{ receipt_date }}
